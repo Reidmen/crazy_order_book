@@ -251,3 +251,57 @@ class LimitOrderBook:
       asks_depth.append((price, total_quantity))
 
     return bids_depth, asks_depth
+
+  def display_book(self, level: int):
+    """Prints formatted representation of the LOB"""
+    print("\n------LOB-------")
+    bids_depth, asks_depth = self.get_depth(level)
+    print("------ ASKS -------")
+    if not asks_depth:
+      print("No asks")
+    else:
+      # print from highest to lowest
+      # stored from lowest (left) to highest (right)
+      for price, quantity in reversed(asks_depth):
+        print(f"{price:.3f} : {quantity}")
+
+    print("------ SPREAD -------")
+    spread = self.get_spread()
+    if spread is None:
+      print("Spread: N/A (one sided)")
+    else:
+      print(f"Spread: {spread}")
+
+    print("------ BIDS-------")
+    if not bids_depth:
+      print("No bids")
+    else:
+      # stored from lowest to highest
+      for price, quantity in bids_depth:
+        print(f"{price:.3f} : {quantity}")
+
+    print("------LOB-------\n")
+
+
+# Example
+if __name__ == "__main__":
+  lob = LimitOrderBook()
+
+  # map value to decimal
+  dec = lambda val: Decimal(str(val))
+
+  print("Adding example orders")
+  o_id1, _ = lob.add_order("BUY", dec(99.5), dec(10))
+  o_id2, _ = lob.add_order("BUY", dec(99.8), dec(5))
+  o_id3, _ = lob.add_order("BUY", dec(99.5), dec(12))
+  o_id4, _ = lob.add_order("SELL", dec(100), dec(20))
+  o_id5, _ = lob.add_order("SELL", dec(99.9), dec(10))
+  o_id6, _ = lob.add_order("SELL", dec(100), dec(3))
+
+  lob.display_book(level=5)
+
+  # Test single match
+  print("Adding new order with cross over...\n")
+  o_id7, trades_1 = lob.add_order("SELL", dec(99.7), dec(8))
+  print(f"Trades executed by Order: {o_id7}: {trades_1}")
+  lob.display_book(level=5)
