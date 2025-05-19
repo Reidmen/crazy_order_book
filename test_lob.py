@@ -124,3 +124,33 @@ def test_cancel_non_existent_order(lob):
 
     assert len(lob._orders) == 1
     assert len(lob.bids) == 1
+
+
+@pytest.mark.parametrize(
+      "setup_bids, setup_asks, expected_spread", [
+        ([], [], None),
+        ([("BUY", dec(99), dec(10))], [], None),
+        ([], [("SELL", dec(99), dec(10))], None),
+        ([("BUY", dec(99.9), dec(10))], [("SELL", dec(101.1), dec(2))], dec(1.2))
+      ]
+)
+def test_spread_computation(
+      lob, setup_bids, setup_asks, expected_spread
+):
+  for side, price, quantity in setup_bids:
+      lob.add_order(side, price, quantity)
+  for side, price, quantity in setup_asks:
+      lob.add_order(side, price, quantity)
+
+  assert lob.get_spread() == expected_spread
+
+
+
+@pytest.mark.parametrize("side, price, quantity, expected_exception", [
+    ('INVALID', dec(100), dec(10), ValueError),
+    ('SELL', dec(-10), dec(10), ValueError),
+    ('SELL', dec(100), dec(-5), ValueError),
+])
+def test_invalid_order_inputs(lob, side, price, quantity, expected_exception):
+    with pytest.raises(expected_exception):
+        lob.add_order(side, price, quantity)
